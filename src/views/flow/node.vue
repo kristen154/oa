@@ -19,9 +19,8 @@
     },
     mounted(){
       let node = this.node;
-      this.moveStyle = {height: (node.height - 10) + 'px', width: (node.width - 10) +'px', top: '5px', left:'5px', background:'red'}
-      this.stateItemSubStyle = {height: node.height, width: node.width};
-      console.log(this.stateItemStyle)
+      this.moveStyle = {height: (node.height - 20) + 'px', width: (node.width - 20) +'px', top: '10px', left:'10px',lineHeight:(node.height - 20) + 'px'}
+      this.stateItemSubStyle = {height: node.height + 'px', width: node.width + 'px'};
     },
     methods:{
       editNode(){
@@ -32,7 +31,6 @@
 </script>
 
 <style scoped>
-
 
   .state-item-sub{
     position:absolute;

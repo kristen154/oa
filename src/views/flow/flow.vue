@@ -4,8 +4,10 @@
     <el-col :span="4" ref="nodeMenu"><left-menu @addNode="addNode"></left-menu></el-col>
     <el-col :span="16">
       <div id="wrapper">
-          <div v-for="item in itemObjs" class="state-item" :class="item.class" :style="{height: item.height + 'px', width: item.width + 'px', top: item.top, left: item.left}" :id="item.id">
+          <div v-for="item in itemObjs" class="state-item" :class="item.classes" :key="item.id" :style="{height:item.height+'px',width:item.width+'px', top: item.top +'px', left: item.left+'px'}" :id="item.id">
             <flow-node :node="item" @editNode="editNode"></flow-node>
+           <!--<div class="move"   @dblclick="editNode">{{item.title}}</div>
+           <div :id="item.id+'-sub'" :ref="item.id+'-sub'"  class="state-item-sub"></div>-->
           </div>
       </div>
     </el-col>
@@ -32,15 +34,15 @@
     data () {
       //
       let itemObjs = {
-		  "item-4": {id: 'item-4', title: 'item-4', class: "el-button el-button--default el-button--medium", width: "80", height: "40", top: '150px', left: '150px'},
-		  "item-1": {id: 'item-1', title: 'item-1', class: "el-button el-button--default el-button--medium", width: "80", height: "40", top: '150px', left: '250px'},
-		  "item-5": {id: 'item-5', title: 'item-5', class: "el-button el-button--default el-button--medium", width: "80", height: "40", top: '150px', left: '450px'},
-		  "item-2": {id: 'item-2', title: 'item-2', class: "el-button el-button--default el-button--medium", width: "80", height: "40", top: '350px', left: '150px'},
-		  "item-6": {id: 'item-6', title: 'item-6', class: "el-button el-button--default el-button--medium", width: "80", height: "40", top: '350px', left: '350px'},
-		  "item-3": {id: 'item-3', title: 'item-3', class: "el-button el-button--default el-button--medium", width: "80", height: "40", top: '350px', left: '650px'},
-		  "item-7": {id: 'item-7', title: 'item-7', class: "el-button el-button--default el-button--medium", width: "80", height: "40", top: '550px', left: '150px'},
-		  "item-8": {id: 'item-8', title: 'item-8', class: "el-button el-button--default el-button--medium", width: "80", height: "40", top: '650px', left: '350px'},
-		  "item-9": {id: 'item-9', title: 'item-9', class: "el-button el-button--default el-button--medium", width: "80", height: "40", top: '550px', left: '650px'},
+		  "item-4": {id: 'item-4', title: 'item-4', classes: "normal-item", width: "80", height: "40", top: '150', left: '150'},
+		  "item-1": {id: 'item-1', title: 'item-1', classes: "normal-item", width: "80", height: "40", top: '150', left: '250'},
+		  "item-5": {id: 'item-5', title: 'item-5', classes: "normal-item", width: "80", height: "40", top: '150', left: '450'},
+		  "item-2": {id: 'item-2', title: 'item-2', classes: "normal-item", width: "80", height: "40", top: '350', left: '150'},
+		  "item-6": {id: 'item-6', title: 'item-6', classes: "normal-item", width: "80", height: "40", top: '350', left: '350'},
+		  "item-3": {id: 'item-3', title: 'item-3', classes: "normal-item", width: "80", height: "40", top: '350', left: '650'},
+		  "item-7": {id: 'item-7', title: 'item-7', classes: "normal-item", width: "80", height: "40", top: '550', left: '150'},
+		  "item-8": {id: 'item-8', title: 'item-8', classes: "normal-item", width: "80", height: "40", top: '650', left: '350'},
+		  "item-9": {id: 'item-9', title: 'item-9', classes: "normal-item", width: "80", height: "40", top: '550', left: '650'},
 		};
 
 	  let relations = [
@@ -216,7 +218,6 @@
        * @param mousePosition 鼠标拖拽结束的坐标
        */
       addNode(evt, nodeMenu, mousePosition){
-        console.log(evt)
         let width = this.$refs.nodeMenu.$el.clientWidth
         let nodeId = this.getUUID(), left = mousePosition.left, top = mousePosition.top
         if (left < 0) {
@@ -229,20 +230,25 @@
         }
 
 
-        console.log(evt.originalEvent.layerX,evt.originalEvent.clientY)
+        let nodeHeight = evt.item.clientHeight
+        let nodeWidth = evt.item.clientWidth
+        let classes = evt.item.className
+        //console.log(evt.originalEvent.layerX,evt.originalEvent.clientY)
         //"item-6": {from: 'item-6',title:'item-6', to:['item-3'],position:{top: '350px', left: '350px'}}
         var node = {
             id: nodeId,
             title: nodeId,
-            top:top +'px',
-            left: left +'px',
+            top:top,
+            left: left,
+            classes: classes,
+            height:nodeHeight,
+            width: nodeWidth,
         }
         /**
          * 这里可以进行业务判断、是否能够添加该节点
          */
 
         this.$set(this.itemObjs, nodeId, node)
-        console.log(this.itemObjs)
         var _this = this
           this.$nextTick(()=> {
             this.jsPlumb.makeSource(nodeId, this.jsplumbSourceOptions)
@@ -263,10 +269,13 @@
       },
       //拖拽结束时触发, 重新设置position
       dragStop(event){
+        console.log("dd")
         let dragNodeId = event.selection[0][0].id;
         let dragNode = this.itemObjs[dragNodeId]
-        dragNode.top = event.selection[0][1].top +'px';
-        dragNode.left = event.selection[0][1].left +'px';
+        console.log(dragNode.top,dragNode.left)
+        console.log(event.selection[0][1].top,event.selection[0][1].left)
+        dragNode.top = event.selection[0][1].top;
+        dragNode.left = event.selection[0][1].left;
       },
       initNewRelation(sourceId, targetId){
         return {from: sourceId, to: targetId};
@@ -294,7 +303,7 @@
   }
   .state-item {
       position:absolute;
-     width: 80px;
+ /*     width: 80px;
       height: 40px;
       color: #606266;
       background: #f6f6f6;
@@ -303,10 +312,44 @@
       line-height: 40px;
       font-family: sans-serif;
       border-radius: 4px;
-      margin-right: 60px;
+      margin-right: 60px; */
+
+      -webkit-transition: none;
+      transition: none;
     }
+
+ /*   .state-item-sub{
+      position:absolute;
+      top:0px;
+      left:0px;
+      height: 40px;
+      width:40px;
+      background:red;
+    } */
   .line-wrap {
     display: flex;
     margin-bottom: 40px;
+  }
+  .normal-item{
+    display: inline-block;
+        line-height: 1;
+        white-space: nowrap;
+        background: #fff;
+        border: 1px solid #DCDFE6;
+        border-color: #DCDFE6;
+        color: #606266;
+        -webkit-appearance: none;
+        text-align: center;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+        outline: none;
+        margin: 0;
+        font-weight: 400;
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        padding: 12px 20px;
+        font-size: 14px;
+        border-radius: 4px;
   }
 </style>
