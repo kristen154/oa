@@ -1,45 +1,55 @@
 <template>
+  <div class="app-container">
   <el-row>
     <el-col :span="4" ref="nodeMenu"><left-menu @addNode="addNode"></left-menu></el-col>
-    <el-col :span="20">
-
-
+    <el-col :span="16">
       <div id="wrapper">
-          <div v-for="item in relations"  class="state-item"  :style="item.position" :id="item.from">
-            <div class="move">{{item.title}}</div>
-            <div :id="item.from+'-sub'" :ref="item.from+'-sub'" class="state-item-sub"></div>
+          <div v-for="item in itemObjs" class="state-item" :class="item.class" :style="{height: item.height + 'px', width: item.width + 'px', top: item.top, left: item.left}" :id="item.id">
+            <flow-node :node="item" @editNode="editNode"></flow-node>
           </div>
       </div>
-     <!-- <ul>
-           <li v-for="item in relations">{{item.from}}----position***({{item.position.top}},{{item.position.left}})------to***<span v-for="i in item.to">{{i}},</span></li>
-        </ul> -->
+    </el-col>
+    <el-col :span="4">
+      <ul>
+            <li v-for="item in relations" @dblclick="editNode">{{item.from}}----> {{item.to}}</li>
+       </ul>
     </el-col>
   </el-row>
+  </div>
 </template>
 
 <script>
   import leftMenu from "./LeftMenu"
   import {jsPlumb} from 'jsplumb'
   import draggable from 'vuedraggable'
-
+  import flowNode from './node'
   export default {
     components: {
       draggable,
       leftMenu,
-
+       flowNode,
     },
     data () {
-      let relations = {
-              "item-4": {from: 'item-4',title:'item-4', to:['item-1'],position:{top: '150px', left: '150px'}},
-              "item-1": {from: 'item-1',title:'item-1', to:['item-5'],position:{top: '150px', left: '250px'}},
-              "item-5": {from: 'item-5',title:'item-5', to:['item-2'],position:{top: '150px', left: '450px'}},
-              "item-2": {from: 'item-2',title:'item-2', to:['item-6'],position:{top: '350px', left: '150px'}},
-              "item-6": {from: 'item-6',title:'item-6', to:['item-3'],position:{top: '350px', left: '350px'}},
-              "item-3": {from: 'item-3',title:'item-3', to: [],position:{top: '350px', left: '650px'}},
-              "item-7": {from: 'item-7',title:'item-7', to: [],position:{top: '550px', left: '150px'}},
-              "item-8": {from: 'item-8',title:'item-8', to: [],position:{top: '650px', left: '350px'}},
-              "item-9": {from: 'item-9',title:'item-9', to: [],position:{top: '550px', left: '650px'}},
-            };
+      //
+      let itemObjs = {
+		  "item-4": {id: 'item-4', title: 'item-4', class: "el-button el-button--default el-button--medium", width: "80", height: "40", top: '150px', left: '150px'},
+		  "item-1": {id: 'item-1', title: 'item-1', class: "el-button el-button--default el-button--medium", width: "80", height: "40", top: '150px', left: '250px'},
+		  "item-5": {id: 'item-5', title: 'item-5', class: "el-button el-button--default el-button--medium", width: "80", height: "40", top: '150px', left: '450px'},
+		  "item-2": {id: 'item-2', title: 'item-2', class: "el-button el-button--default el-button--medium", width: "80", height: "40", top: '350px', left: '150px'},
+		  "item-6": {id: 'item-6', title: 'item-6', class: "el-button el-button--default el-button--medium", width: "80", height: "40", top: '350px', left: '350px'},
+		  "item-3": {id: 'item-3', title: 'item-3', class: "el-button el-button--default el-button--medium", width: "80", height: "40", top: '350px', left: '650px'},
+		  "item-7": {id: 'item-7', title: 'item-7', class: "el-button el-button--default el-button--medium", width: "80", height: "40", top: '550px', left: '150px'},
+		  "item-8": {id: 'item-8', title: 'item-8', class: "el-button el-button--default el-button--medium", width: "80", height: "40", top: '650px', left: '350px'},
+		  "item-9": {id: 'item-9', title: 'item-9', class: "el-button el-button--default el-button--medium", width: "80", height: "40", top: '550px', left: '650px'},
+		};
+
+	  let relations = [
+		  {from:'item-4',to:'item-1'},
+		  {from:'item-5',to:'item-3'},
+		  {from:'item-6',to:'item-7'},
+		  {from:'item-8',to:'item-6'},
+		  {from:'item-9',to:'item-5'},
+	  ]
       let defaultConfig = {
         // 对应上述基本概念
         Anchor: 'Continuous',
@@ -73,6 +83,7 @@
       };
       return {
         relations : relations,
+        itemObjs,
         jsPlumb : null,
         defaultConfig,
         jsplumbSourceOptions: {
@@ -103,7 +114,7 @@
               this.$message.error('不能连自己')
               return false;
             }
-            if(this.hasLine(from, to)){
+            if(this.hasLine(from, to) != -1){
               this.$message.error('不能连重复线')
               return false;
             }
@@ -115,7 +126,7 @@
             let from = evt.source.id
             let to = evt.target.id
             if(this.loadEasyFlowFinish){
-              this.relations[from].to.push(to);
+              this.relations.push(this.initNewRelation(from, to))
             }
           })
 
@@ -131,19 +142,9 @@
           })
 
           // 单点击了连接线,
-          /* this.jsPlumb.bind('click', (conn, originalEvent) => {
-              let _conn = conn
-              this.$confirm('确定删除所点击的线吗?', '提示', {
-                  confirmButtonText: '确定',
-                  cancelButtonText: '取消',
-                  type: 'warning'
-              }).then(() => {
-                  this.deleteLine(_conn.source.id,_conn.target.id)
-                  this.jsPlumb.deleteConnection(conn)
-                  console.log(this.relations)
-              }).catch(() => {
-              })
-          }) */
+           this.jsPlumb.bind('dblclick', (conn, originalEvent) => {
+              this.$message.error("你双击了连接线"+conn.sourceId+"----->"+conn.targetId)
+          })
 
 
         })
@@ -155,61 +156,58 @@
 
       //加载原始数据
       loadEasyFlow() {
-        let anchors = ['Right', 'Top', 'Bottom','Left' ];
-
-        for (let key in this.relations){
-          let item = this.relations[key];
-          this.jsPlumb.makeSource(item.from,this.jsplumbSourceOptions)
-          this.jsPlumb.makeTarget(item.from,this.jsplumbSourceOptions)
+        for (let key in this.itemObjs){
+          let item = this.itemObjs[key];
+          this.jsPlumb.makeSource(item.id,this.jsplumbSourceOptions)
+          this.jsPlumb.makeTarget(item.id,this.jsplumbSourceOptions)
           var _this = this
-          this.jsPlumb.draggable(item.from, {
+          this.jsPlumb.draggable(item.id, {
             containment: 'wrapper',
             //拖拽结束时更新数据
             stop:function (event) {
                 _this.dragStop(event)
             }
           })
-
-          // 初始化连线
-          if(item.hasOwnProperty('to') && item.to.length != 0){
-            item.to.forEach((itemTo)=>{
-              this.jsPlumb.connect({
-              source: item.from,
-              target: itemTo,
-            })
-          })
-
-          }
         }
+
+
+        // 初始化连线
+        this.relations.forEach((item) => {
+          this.jsPlumb.connect({
+            source: item.from,
+            target: item.to,
+          })
+        })
+
 
       },
       /**
-       * @param {Object} from 来源元素
-       * @param {Object} to target元素
+       * @param {Object} sourceId 来源元素
+       * @param {Object} to targetId元素
        */
-      hasLine(from, to) {
-          let toArr = this.relations[from].to;
-          //判断是否存在与to
-          if(toArr.includes(to)){
-            return true
+      hasLine(sourceId, targetId) {
+        let lineIndex = -1;
+        for(let i = 0, len = this.relations.length; i<len; i++){
+          let relationItem = this.relations[i]
+          if(relationItem.from == sourceId && relationItem.to == targetId){
+            lineIndex = i
+            //this.relations.splice(i, 1);//删除改元素
+            break;
           }
-          return false
+        }
+        return lineIndex;
       },
 
-      //拖拽结束时触发
-      dragStop(event){
-        let dragNodeId = event.selection[0][0].id;
-        let dragNode = this.relations[dragNodeId]
-        dragNode.position.top = event.selection[0][1].top+"px";
-        dragNode.position.left = event.selection[0][1].left+"px";
-      },
+
+
       // 删除连接线
-      deleteLine(sourceId,targetId){
-        let fromObj = this.relations[sourceId]
-        let toArr = fromObj.to;
-        if(toArr.includes(targetId)){
-          toArr.splice(toArr.indexOf(targetId),1)
+      deleteLine(sourceId, targetId){
+        let lineIndex = this.hasLine(sourceId, targetId);
+        if(lineIndex == -1){
+          return false;
         }
+        this.relations.splice(lineIndex, 1);//删除改元素
+
       },
       /**
        * 拖拽结束后添加新的节点
@@ -227,25 +225,26 @@
         }
         if (top < 0) {
             //top = evt.originalEvent.clientY - 50
-            top = evt.originalEvent.clientY - 20
+            top = evt.originalEvent.clientY - 142
         }
 
 
         console.log(evt.originalEvent.layerX,evt.originalEvent.clientY)
         //"item-6": {from: 'item-6',title:'item-6', to:['item-3'],position:{top: '350px', left: '350px'}}
         var node = {
-            from: nodeId,
+            id: nodeId,
             title: nodeId,
-            to:[],
-            position:{top:top + 'px',left: left + 'px',}
+            top:top +'px',
+            left: left +'px',
         }
         /**
          * 这里可以进行业务判断、是否能够添加该节点
          */
 
-        this.$set(this.relations, nodeId, node)
+        this.$set(this.itemObjs, nodeId, node)
+        console.log(this.itemObjs)
         var _this = this
-        this.$nextTick(()=> {
+          this.$nextTick(()=> {
             this.jsPlumb.makeSource(nodeId, this.jsplumbSourceOptions)
             this.jsPlumb.makeTarget(nodeId, this.jsplumbSourceOptions)
             this.jsPlumb.draggable(nodeId, {
@@ -255,9 +254,22 @@
                 }
             })
         })
-      },
-      initNode(){
 
+      },
+
+      editNode(nodeId){
+        console.log(nodeId)
+        this.$message("你双击了元素"+nodeId)
+      },
+      //拖拽结束时触发, 重新设置position
+      dragStop(event){
+        let dragNodeId = event.selection[0][0].id;
+        let dragNode = this.itemObjs[dragNodeId]
+        dragNode.top = event.selection[0][1].top +'px';
+        dragNode.left = event.selection[0][1].left +'px';
+      },
+      initNewRelation(sourceId, targetId){
+        return {from: sourceId, to: targetId};
       },
       getUUID() {
         return new Date().getTime().toString();
@@ -271,48 +283,28 @@
 <style scoped>
   #wrapper {
    box-sizing:border-box;
-    background:
-
-      radial-gradient(
+    background:radial-gradient(
         ellipse at top left,
         rgba(255, 255, 255, 1) 40%,
         rgba(229, 229, 229, .9) 100%
       );
-      position: relative;
-    height: 100vh;
-    padding: 60px 80px;
-    width: 100vw;
+    position: relative;
+    height: calc(100vh - 124px);
+    width: 100%;
   }
   .state-item {
-    position:absolute;
-    width: 80px;
-    height: 40px;
-    color: #606266;
-    background: #f6f6f6;
-    border: 2px solid rgba(0, 0, 0, 0.05);
-    text-align: center;
-    line-height: 40px;
-    font-family: sans-serif;
-    border-radius: 4px;
-    margin-right: 60px;
-  }
-  .move{
-    position:absolute;
-    cursor: move;
-    z-index:10;
-    top:7px;
-    left: 10px;
-    width:60px;
-    height: 28px;
-    line-height: 28px;
-  }
-  .state-item-sub{
-    position:absolute;
-    top:0px;
-    left:0px;
-    width: 80px;
-    height: 40px;
-  }
+      position:absolute;
+     width: 80px;
+      height: 40px;
+      color: #606266;
+      background: #f6f6f6;
+      border: 2px solid rgba(0, 0, 0, 0.05);
+      text-align: center;
+      line-height: 40px;
+      font-family: sans-serif;
+      border-radius: 4px;
+      margin-right: 60px;
+    }
   .line-wrap {
     display: flex;
     margin-bottom: 40px;
