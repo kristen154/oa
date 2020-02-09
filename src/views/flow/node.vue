@@ -1,5 +1,8 @@
 <template>
-  <div>
+  <div 
+    @mouseenter="mouseEnter=true"
+    @mouseleave="mouseEnter=false">
+    <div class="close" v-show="mouseEnter" @click="deleteNode"><i class="el-icon-error"></i></div>
     <div class="move" :style="moveStyle"   @dblclick="editNode">{{node.title}}</div>
     <div :id="node.id+'-sub'" :ref="node.id+'-sub'" :style="stateItemSubStyle" class="state-item-sub"></div>
   </div>
@@ -12,6 +15,7 @@
     },
     data(){
       return{
+        mouseEnter: false,
         stateItemStyle: null,
         moveStyle: null,
         stateItemSubStyle: null,
@@ -25,6 +29,9 @@
     methods:{
       editNode(){
         this.$emit('editNode', this.node.id)
+      },
+      deleteNode(){
+        this.$emit('deleteNode',this.node.id)
       }
     }
   }
@@ -42,5 +49,13 @@
     cursor: move;
     z-index:10;
     line-height: 28px;
+  }
+  .close{
+    position: absolute;
+    cursor: pointer;
+    color: red;
+    right: -10px;
+    top: -10px;
+    font-size: 20px;
   }
 </style>

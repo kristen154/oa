@@ -5,14 +5,15 @@ import user from './user'
 import role from './role'
 import article from './article'
 import search from './remote-search'
+import flow from './flow'
 
 const mocks = [
   ...user,
   ...role,
   ...article,
-  ...search
+  ...search,
+  ...flow
 ]
-
 // for front mock
 // please use it cautiously, it will redefine XMLHttpRequest,
 // which will cause many of your third-party libraries to be invalidated(like progress event).

@@ -4,19 +4,22 @@
     <el-col :span="4" ref="nodeMenu"><left-menu @addNode="addNode"></left-menu></el-col>
     <el-col :span="16">
       <div id="wrapper">
-          <div v-for="item in itemObjs" class="state-item" :class="item.classes" :key="item.id" :style="{height:item.height+'px',width:item.width+'px', top: item.top +'px', left: item.left+'px'}" :id="item.id">
-            <flow-node :node="item" @editNode="editNode"></flow-node>
-           <!--<div class="move"   @dblclick="editNode">{{item.title}}</div>
-           <div :id="item.id+'-sub'" :ref="item.id+'-sub'"  class="state-item-sub"></div>-->
+          <div v-for="item in nodeObjs" class="state-item" :class="item.classes" :key="item.id" :style="{height:item.height+'px',width:item.width+'px', top: item.top +'px', left: item.left+'px'}" :id="item.id">
+            <flow-node :node="item" @editNode="editNode" @deleteNode="deleteNode"></flow-node>
           </div>
       </div>
     </el-col>
     <el-col :span="4">
       <ul>
-            <li v-for="item in relations" @dblclick="editNode">{{item.from}}----> {{item.to}}</li>
-       </ul>
+        <li v-for="item in relations" @dblclick="editNode">{{item.from}}----> {{item.to}}</li>
+      </ul>
+      <ul>
+        <li v-for="ob in nodeObjs">{{ob.id}}</li>
+      </ul>
     </el-col>
   </el-row>
+  <node-form v-if="nodeFormVisible" ref="nodeForm"></node-form>
+  <relation-form v-if="relationFormVisible" ref="relationForm"></relation-form>
   </div>
 </template>
 
@@ -25,33 +28,18 @@
   import {jsPlumb} from 'jsplumb'
   import draggable from 'vuedraggable'
   import flowNode from './node'
+  import nodeForm from './nodeForm'
+  import relationForm from './relationForm'
+  import {fetchNodeList, fetchRelationList} from '@/api/flow'
   export default {
     components: {
       draggable,
       leftMenu,
-       flowNode,
+      flowNode,
+      nodeForm,
+      relationForm,
     },
     data () {
-      //
-      let itemObjs = {
-		  "item-4": {id: 'item-4', title: 'item-4', classes: "normal-item", width: "80", height: "40", top: '150', left: '150'},
-		  "item-1": {id: 'item-1', title: 'item-1', classes: "normal-item", width: "80", height: "40", top: '150', left: '250'},
-		  "item-5": {id: 'item-5', title: 'item-5', classes: "normal-item", width: "80", height: "40", top: '150', left: '450'},
-		  "item-2": {id: 'item-2', title: 'item-2', classes: "normal-item", width: "80", height: "40", top: '350', left: '150'},
-		  "item-6": {id: 'item-6', title: 'item-6', classes: "normal-item", width: "80", height: "40", top: '350', left: '350'},
-		  "item-3": {id: 'item-3', title: 'item-3', classes: "normal-item", width: "80", height: "40", top: '350', left: '650'},
-		  "item-7": {id: 'item-7', title: 'item-7', classes: "normal-item", width: "80", height: "40", top: '550', left: '150'},
-		  "item-8": {id: 'item-8', title: 'item-8', classes: "normal-item", width: "80", height: "40", top: '650', left: '350'},
-		  "item-9": {id: 'item-9', title: 'item-9', classes: "normal-item", width: "80", height: "40", top: '550', left: '650'},
-		};
-
-	  let relations = [
-		  {from:'item-4',to:'item-1'},
-		  {from:'item-5',to:'item-3'},
-		  {from:'item-6',to:'item-7'},
-		  {from:'item-8',to:'item-6'},
-		  {from:'item-9',to:'item-5'},
-	  ]
       let defaultConfig = {
         // 对应上述基本概念
         Anchor: 'Continuous',
@@ -84,20 +72,44 @@
         HoverPaintStyle: {stroke: '#1565C0', strokeWidth: 3},
       };
       return {
-        relations : relations,
-        itemObjs,
-        jsPlumb : null,
+        //连接关系
+        relations: null,
+        //节点对象
+        nodeObjs: null,
+        jsPlumb: null,
         defaultConfig,
         jsplumbSourceOptions: {
            filter: ".state-item-sub"
         },
+        // 控制表单显示与隐藏
+        nodeFormVisible: false,
+        relationFormVisible: false
       }
     },
     mounted () {
-      this.jsPlumb = jsPlumb.getInstance()
-      this.jsPlumbInit();
+      this.getData().then((resolve)=>{
+        this.jsPlumb = jsPlumb.getInstance()
+        this.jsPlumbInit();
+        resolve();
+      })
+
     },
     methods : {
+      //获取数据
+      getData(){
+        return new Promise((resolve,rej)=>{
+          fetchNodeList().then(response => {
+            this.nodeObjs = response.data
+          }).then(_=>{
+            fetchRelationList().then(response => {
+              console.log(response)
+              this.relations = response.data
+              resolve()
+            })
+          })
+        })
+
+      },
       jsPlumbInit(){
         const _this = this
         this.jsPlumb.ready(()=>{
@@ -145,7 +157,7 @@
 
           // 单点击了连接线,
            this.jsPlumb.bind('dblclick', (conn, originalEvent) => {
-              this.$message.error("你双击了连接线"+conn.sourceId+"----->"+conn.targetId)
+             this.editRelation(conn.sourceId,conn.targetId)
           })
 
 
@@ -158,8 +170,8 @@
 
       //加载原始数据
       loadEasyFlow() {
-        for (let key in this.itemObjs){
-          let item = this.itemObjs[key];
+        for (let key in this.nodeObjs){
+          let item = this.nodeObjs[key];
           this.jsPlumb.makeSource(item.id,this.jsplumbSourceOptions)
           this.jsPlumb.makeTarget(item.id,this.jsplumbSourceOptions)
           var _this = this
@@ -183,22 +195,7 @@
 
 
       },
-      /**
-       * @param {Object} sourceId 来源元素
-       * @param {Object} to targetId元素
-       */
-      hasLine(sourceId, targetId) {
-        let lineIndex = -1;
-        for(let i = 0, len = this.relations.length; i<len; i++){
-          let relationItem = this.relations[i]
-          if(relationItem.from == sourceId && relationItem.to == targetId){
-            lineIndex = i
-            //this.relations.splice(i, 1);//删除改元素
-            break;
-          }
-        }
-        return lineIndex;
-      },
+
 
 
 
@@ -233,9 +230,7 @@
         let nodeHeight = evt.item.clientHeight
         let nodeWidth = evt.item.clientWidth
         let classes = evt.item.className
-        //console.log(evt.originalEvent.layerX,evt.originalEvent.clientY)
-        //"item-6": {from: 'item-6',title:'item-6', to:['item-3'],position:{top: '350px', left: '350px'}}
-        var node = {
+        let node = {
             id: nodeId,
             title: nodeId,
             top:top,
@@ -248,8 +243,8 @@
          * 这里可以进行业务判断、是否能够添加该节点
          */
 
-        this.$set(this.itemObjs, nodeId, node)
-        var _this = this
+        this.$set(this.nodeObjs, nodeId, node)
+        let _this = this
           this.$nextTick(()=> {
             this.jsPlumb.makeSource(nodeId, this.jsplumbSourceOptions)
             this.jsPlumb.makeTarget(nodeId, this.jsplumbSourceOptions)
@@ -263,20 +258,78 @@
 
       },
 
+
+      //编辑节点
       editNode(nodeId){
-        console.log(nodeId)
-        this.$message("你双击了元素"+nodeId)
+        this.nodeFormVisible = true
+        this.$nextTick(function () {
+            this.$refs.nodeForm.init(this.nodeObjs, nodeId)
+        })
       },
+
+      //删除节点
+      deleteNode(nodeId){
+        this.$confirm('确定要删除节点' + nodeId + '?', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning',
+            closeOnClickModal: false
+        }).then(() => {
+            //删除连接线
+          this.relations.forEach((item,index)=>{
+            if(nodeId == item.from || nodeId == item.to){
+              console.log(index)
+              this.relations.splice(index,1);
+            }
+          })
+          //删除对象
+          delete this.nodeObjs[nodeId]
+          this.$nextTick(function () {
+              this.jsPlumb.removeAllEndpoints(nodeId);
+          })
+        })
+        .catch(() => {})
+        return false;
+
+      },
+
+      //编辑关系
+      editRelation(sourceId, targetId){
+        this.relationFormVisible = true
+        this.$nextTick(() => {
+
+          let lineIndex = this.hasLine(sourceId,targetId)
+          this.$refs.relationForm.init(this.relations[lineIndex])
+        })
+      },
+
+
       //拖拽结束时触发, 重新设置position
       dragStop(event){
-        console.log("dd")
         let dragNodeId = event.selection[0][0].id;
-        let dragNode = this.itemObjs[dragNodeId]
-        console.log(dragNode.top,dragNode.left)
-        console.log(event.selection[0][1].top,event.selection[0][1].left)
+        let dragNode = this.nodeObjs[dragNodeId]
         dragNode.top = event.selection[0][1].top;
         dragNode.left = event.selection[0][1].left;
       },
+
+      /**
+       * 获取关系index
+       * @param {Object} sourceId 来源元素
+       * @param {Object} to targetId元素
+       */
+      hasLine(sourceId, targetId) {
+        let lineIndex = -1;
+        for(let i = 0, len = this.relations.length; i<len; i++){
+          let relationItem = this.relations[i]
+          if(relationItem.from == sourceId && relationItem.to == targetId){
+            lineIndex = i
+            //this.relations.splice(i, 1);//删除改元素
+            break;
+          }
+        }
+        return lineIndex;
+      },
+
       initNewRelation(sourceId, targetId){
         return {from: sourceId, to: targetId};
       },
@@ -291,65 +344,49 @@
 
 <style scoped>
   #wrapper {
-   box-sizing:border-box;
-    background:radial-gradient(
-        ellipse at top left,
-        rgba(255, 255, 255, 1) 40%,
-        rgba(229, 229, 229, .9) 100%
-      );
     position: relative;
-    height: calc(100vh - 124px);
     width: 100%;
+    height: calc(100vh - 124px);
+    box-sizing:border-box;
+    background:radial-gradient(
+      ellipse at top left,
+      rgba(255, 255, 255, 1) 40%,
+      rgba(229, 229, 229, .9) 100%
+    );
+
   }
   .state-item {
       position:absolute;
- /*     width: 80px;
-      height: 40px;
-      color: #606266;
-      background: #f6f6f6;
-      border: 2px solid rgba(0, 0, 0, 0.05);
-      text-align: center;
-      line-height: 40px;
-      font-family: sans-serif;
-      border-radius: 4px;
-      margin-right: 60px; */
-
+      /* 解决拖拽有延迟问题*/
       -webkit-transition: none;
       transition: none;
     }
 
- /*   .state-item-sub{
-      position:absolute;
-      top:0px;
-      left:0px;
-      height: 40px;
-      width:40px;
-      background:red;
-    } */
+
   .line-wrap {
     display: flex;
     margin-bottom: 40px;
   }
   .normal-item{
     display: inline-block;
-        line-height: 1;
-        white-space: nowrap;
-        background: #fff;
-        border: 1px solid #DCDFE6;
-        border-color: #DCDFE6;
-        color: #606266;
-        -webkit-appearance: none;
-        text-align: center;
-        -webkit-box-sizing: border-box;
-        box-sizing: border-box;
-        outline: none;
-        margin: 0;
-        font-weight: 400;
-        -moz-user-select: none;
-        -webkit-user-select: none;
-        -ms-user-select: none;
-        padding: 12px 20px;
-        font-size: 14px;
-        border-radius: 4px;
+    line-height: 1;
+    white-space: nowrap;
+    background: #fff;
+    border: 1px solid #DCDFE6;
+    border-color: #DCDFE6;
+    color: #606266;
+    -webkit-appearance: none;
+    text-align: center;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    outline: none;
+    margin: 0;
+    font-weight: 400;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    padding: 12px 20px;
+    font-size: 14px;
+    border-radius: 4px;
   }
 </style>
