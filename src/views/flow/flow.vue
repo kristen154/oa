@@ -1,5 +1,6 @@
 <template>
   <div class="app-container">
+    <div>双击节点弹出框，双击连线弹出框</div>
   <el-row>
     <el-col :span="4" ref="nodeMenu"><left-menu @addNode="addNode"></left-menu></el-col>
     <el-col :span="16">
