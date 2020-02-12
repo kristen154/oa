@@ -6,13 +6,15 @@ import role from './role'
 import article from './article'
 import search from './remote-search'
 import flow from './flow'
+import gridLayout from './gridLayout'
 
 const mocks = [
   ...user,
   ...role,
   ...article,
   ...search,
-  ...flow
+  ...flow,
+  ...gridLayout
 ]
 // for front mock
 // please use it cautiously, it will redefine XMLHttpRequest,
