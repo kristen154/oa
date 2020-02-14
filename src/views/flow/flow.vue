@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <div>双击节点弹出框，双击连线弹出框</div>
-  <el-row>
+  <el-row :gutter="20">
     <el-col :span="4" ref="nodeMenu"><left-menu @addNode="addNode"></left-menu></el-col>
     <el-col :span="16">
       <div id="wrapper">
@@ -11,16 +11,17 @@
       </div>
     </el-col>
     <el-col :span="4">
-      <ul>
-        <li v-for="item in relations" @dblclick="editNode">{{item.from}}----> {{item.to}}</li>
+      <node-form v-if="nodeFormVisible" ref="nodeForm"></node-form>
+      <relation-form v-if="relationFormVisible" ref="relationForm"></relation-form>
+      <!-- <ul>
+        <li v-for="item in relations" @dblclick="editNode">{{item.from}} {{item.to}}</li>
       </ul>
       <ul>
         <li v-for="ob in nodeObjs">{{ob.id}}</li>
-      </ul>
+      </ul> -->
     </el-col>
   </el-row>
-  <node-form v-if="nodeFormVisible" ref="nodeForm"></node-form>
-  <relation-form v-if="relationFormVisible" ref="relationForm"></relation-form>
+
   </div>
 </template>
 
@@ -39,9 +40,10 @@
       flowNode,
       nodeForm,
       relationForm,
+      
     },
     data () {
-      let defaultConfig = {
+      const defaultConfig = {
         // 对应上述基本概念
         Anchor: 'Continuous',
         /* Anchors : [ null, null ], */
@@ -80,6 +82,7 @@
         jsPlumb: null,
         defaultConfig,
         jsplumbSourceOptions: {
+          //通过遮罩层解决makesource和draggle的冲突
            filter: ".state-item-sub"
         },
         // 控制表单显示与隐藏
@@ -88,12 +91,10 @@
       }
     },
     mounted () {
-      this.getData().then((resolve)=>{
+      this.getData().then(()=>{
         this.jsPlumb = jsPlumb.getInstance()
         this.jsPlumbInit();
-        resolve();
       })
-
     },
     methods : {
       //获取数据
@@ -109,7 +110,6 @@
             })
           })
         })
-
       },
       jsPlumbInit(){
         const _this = this
@@ -262,7 +262,7 @@
 
       //编辑节点
       editNode(nodeId){
-        this.nodeFormVisible = true
+        this.showRight('nodeForm')
         this.$nextTick(function () {
             this.$refs.nodeForm.init(this.nodeObjs, nodeId)
         })
@@ -296,9 +296,8 @@
 
       //编辑关系
       editRelation(sourceId, targetId){
-        this.relationFormVisible = true
+        this.showRight('relationForm')
         this.$nextTick(() => {
-
           let lineIndex = this.hasLine(sourceId,targetId)
           this.$refs.relationForm.init(this.relations[lineIndex])
         })
@@ -337,6 +336,21 @@
       getUUID() {
         return new Date().getTime().toString();
       },
+
+      showRight(nodeFormType) {
+        if(nodeFormType == 'nodeForm'){
+          if(this.nodeFormVisible == false){
+            this.relationFormVisible = false
+            this.nodeFormVisible = true
+          }
+        }else if(nodeFormType == 'relationForm'){
+          if(this.relationFormVisible == false){
+            this.nodeFormVisible = false
+            this.relationFormVisible = true
+          }
+        }
+
+      }
     }
   }
 

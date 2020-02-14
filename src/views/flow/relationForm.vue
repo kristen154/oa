@@ -1,9 +1,8 @@
 <template>
-    <el-dialog
-            :title="relation.from + '-->' + relation.to"
-            :close-on-click-modal="false"
-            :visible.sync="visible"
+    <div 
+       :visible.sync="visible"
     >
+        <div>关系{{relation.from}} --&gt;  {{relation.to}}属性</div>
         <el-form :model="relation" ref="dataForm" label-width="80px">
             <el-form-item label="源">
                 <el-input v-model="relation.from"></el-input>
@@ -16,7 +15,7 @@
             <el-button @click="visible = false" icon="el-icon-close">取消</el-button>
             <el-button type="primary" icon="el-icon-check" @click="visible = false">确定</el-button>
         </span>
-    </el-dialog>
+    </div>
 </template>
 
 <script>
