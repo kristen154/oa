@@ -1,5 +1,5 @@
 <template>
-  <div 
+  <div
     @mouseenter="mouseEnter=true"
     @mouseleave="mouseEnter=false">
     <div class="close" v-show="mouseEnter" @click="deleteNode"><i class="el-icon-error"></i></div>

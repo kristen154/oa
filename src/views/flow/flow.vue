@@ -355,6 +355,13 @@
       rgba(229, 229, 229, .9) 100%
     );
 
+    background: #fff;
+    background-image:
+    linear-gradient(45deg, #eee 25%, transparent 0, transparent 75%, #eee 0),
+    linear-gradient(45deg, #eee 25%, transparent 0, transparent 75%, #eee 0);
+    background-position: 0 0, 15px 15px;
+    background-size: 30px 30px;
+
   }
   .state-item {
       position:absolute;

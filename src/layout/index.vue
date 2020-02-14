@@ -7,7 +7,7 @@
         <navbar />
         <tags-view v-if="needTagsView" />
       </div>
-      <app-main />
+      <app-main ref="mainPanel" :style="{height : panelHeight+'px'}" />
       <right-panel v-if="showSettings">
         <settings />
       </right-panel>
@@ -32,13 +32,18 @@ export default {
     TagsView
   },
   mixins: [ResizeMixin],
+  data () {
+    return {
+      panelHeight:0
+    }
+  },
   computed: {
     ...mapState({
       sidebar: state => state.app.sidebar,
       device: state => state.app.device,
       showSettings: state => state.settings.showSettings,
       needTagsView: state => state.settings.tagsView,
-      fixedHeader: state => state.settings.fixedHeader
+      fixedHeader: state => state.settings.fixedHeader,
     }),
     classObj() {
       return {
@@ -49,9 +54,17 @@ export default {
       }
     }
   },
+  mounted() {
+    this.$nextTick(()=>{
+        this.panelHeight = this.getMainHeight();
+    })
+  },
   methods: {
     handleClickOutside() {
       this.$store.dispatch('app/closeSideBar', { withoutAnimation: false })
+    },
+    getMainHeight () {
+      return this.$refs.mainPanel.$el.offsetHeight
     }
   }
 }

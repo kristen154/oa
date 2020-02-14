@@ -13,6 +13,7 @@ import tableRouter from './modules/table'
 import nestedRouter from './modules/nested'
 import gridFormRouter from './modules/gridform'
 import flowRouter from './modules/flow'
+import editTableRouter from './modules/edittable'
 
 /**
  * Note: sub-menu only appear when route children.length >= 1
@@ -193,7 +194,7 @@ export const asyncRoutes = [
   tableRouter, */
   gridFormRouter,
   flowRouter,
-
+  editTableRouter,
   {
     path: '/example',
     component: Layout,

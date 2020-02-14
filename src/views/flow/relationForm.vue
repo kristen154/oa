@@ -1,6 +1,6 @@
 <template>
     <el-dialog
-            title="节点信息"
+            :title="relation.from + '-->' + relation.to"
             :close-on-click-modal="false"
             :visible.sync="visible"
     >

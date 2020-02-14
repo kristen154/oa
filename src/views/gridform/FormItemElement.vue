@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-form-item :label="formNode.label">
-      <template v-if="nodeName === 'INPUT'"2>
+      <template v-if="nodeName === 'INPUT'">
         <el-input v-model="value"></el-input>
       </template>
 
