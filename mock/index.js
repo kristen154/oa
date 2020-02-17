@@ -7,8 +7,27 @@ import article from './article'
 import search from './remote-search'
 import flow from './flow'
 import gridLayout from './gridLayout'
+var requireContext = require('require-context');
+/* import { requireDir } from '../src/utils/require-dir.js'
+//引入mock所有的路由
+let moduleMock = requireDir('.', false, /\.js$/)
+ */
 
+/* import { requireDir } from '../src/utils/require-dir.js'
+// 引入modules所有的路由
+const routerList = requireDir(requireContext( '.', false, /\.js$/), './index.js')
+ */
+/* const files = requireContext('.', false, /\.js$/)
+const routerList = []
+files.keys().forEach(key => {
+  console.log(key)
+    if (key === 'index.js') return
+    //routerList.push(files(key).default)
+  })
+
+return false; */
 const mocks = [
+//  ...routerList
   ...user,
   ...role,
   ...article,

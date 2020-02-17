@@ -7,13 +7,20 @@ Vue.use(Router)
 import Layout from '@/layout'
 
 /* Router Modules */
-import componentsRouter from './modules/components'
-import chartsRouter from './modules/charts'
-import tableRouter from './modules/table'
-import nestedRouter from './modules/nested'
-import gridFormRouter from './modules/gridform'
-import flowRouter from './modules/flow'
-import editTableRouter from './modules/edittable'
+import { requireDir } from '@/utils/require-dir.js'
+// 引入modules所有的路由
+const routerList = requireDir(require.context( './modules', false, /\.js$/), './index.js')
+
+
+
+/*
+const routersFiles = require.context('./modules', false, /\.js$/)
+let routerList = []
+routersFiles.keys().forEach(key => {
+  if(key==='./index.js') return
+  routerList.push(routersFiles(key).default) //读取文件仲的default模块
+}) */
+
 
 /**
  * Note: sub-menu only appear when route children.length >= 1
@@ -192,9 +199,7 @@ export const asyncRoutes = [
   chartsRouter,
   nestedRouter,
   tableRouter, */
-  gridFormRouter,
-  flowRouter,
-  editTableRouter,
+  ...routerList,
   {
     path: '/example',
     component: Layout,
