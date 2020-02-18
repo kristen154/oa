@@ -9,19 +9,7 @@ import Layout from '@/layout'
 /* Router Modules */
 import { requireDir } from '@/utils/require-dir.js'
 // 引入modules所有的路由
-const routerList = requireDir(require.context( './modules', false, /\.js$/), './index.js')
-
-
-
-/*
-const routersFiles = require.context('./modules', false, /\.js$/)
-let routerList = []
-routersFiles.keys().forEach(key => {
-  if(key==='./index.js') return
-  routerList.push(routersFiles(key).default) //读取文件仲的default模块
-}) */
-
-
+const routerList = requireDir(require.context('./modules', false, /\.js$/), ['./index.js'])
 /**
  * Note: sub-menu only appear when route children.length >= 1
  * Detail see: https://panjiachen.github.io/vue-element-admin-site/guide/essentials/router-and-nav.html

@@ -1,39 +1,13 @@
 import Mock from 'mockjs'
 import { param2Obj } from '../src/utils'
+const requireContext = require('require-context');
 
-import user from './user'
-import role from './role'
-import article from './article'
-import search from './remote-search'
-import flow from './flow'
-import gridLayout from './gridLayout'
-var requireContext = require('require-context');
-/* import { requireDir } from '../src/utils/require-dir.js'
-//引入mock所有的路由
-let moduleMock = requireDir('.', false, /\.js$/)
- */
+// 批量引入api
+import { requireDir } from '../src/utils/require-dir.js'
+const routerList = requireDir(requireContext('../../mock', true, /\.js$/), ['index.js','mock-server.js'])
 
-/* import { requireDir } from '../src/utils/require-dir.js'
-// 引入modules所有的路由
-const routerList = requireDir(requireContext( '.', false, /\.js$/), './index.js')
- */
-/* const files = requireContext('.', false, /\.js$/)
-const routerList = []
-files.keys().forEach(key => {
-  console.log(key)
-    if (key === 'index.js') return
-    //routerList.push(files(key).default)
-  })
-
-return false; */
 const mocks = [
-//  ...routerList
-  ...user,
-  ...role,
-  ...article,
-  ...search,
-  ...flow,
-  ...gridLayout
+  ...routerList
 ]
 // for front mock
 // please use it cautiously, it will redefine XMLHttpRequest,

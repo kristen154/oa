@@ -1,12 +1,14 @@
 /**
  * 整个文件夹导入
  */
-export function requireDir(files, entryFile = './index.js') {
-  const list = []
+export function requireDir(files, entryFile = ['./index.js']) {
+  let list = []
   files.keys().forEach(key => {
-    console.log(key)
-    if (key === entryFile) return
-    list.push(files(key).default)
+    if (entryFile.includes(entryFile)) return
+    // 必须是export default
+    if (files(key).default) {
+      list = list.concat(files(key).default)
+    }
   })
   return list
 }
