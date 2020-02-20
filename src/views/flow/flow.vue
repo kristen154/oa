@@ -1,17 +1,16 @@
 <template>
   <div class="app-container">
-    <div>双击节点弹出框，双击连线弹出框</div>
   <el-row :gutter="20">
-    <el-col :span="4" ref="nodeMenu"><left-menu @addNode="addNode"></left-menu></el-col>
+    <el-col :span="2" ref="nodeMenu"><left-menu @addNode="addNode"></left-menu></el-col>
     <el-col :span="16">
       <div id="wrapper">
-          <div v-for="item in nodeObjs" class="state-item" :class="item.classes" :key="item.id" :style="{height:item.height+'px',width:item.width+'px', top: item.top +'px', left: item.left+'px'}" :id="item.id">
+          <div v-for="item in nodeObjs" class="state-item" :class="item.classes" :key="item.id" :style="{height:item.height+'px',width:item.width+'px', top: item.y +'px', left: item.x+'px'}" :id="item.id">
             <flow-node :node="item" @editNode="editNode" @deleteNode="deleteNode"></flow-node>
           </div>
       </div>
     </el-col>
-    <el-col :span="4">
-      <node-form v-if="nodeFormVisible" ref="nodeForm"></node-form>
+    <el-col :span="6">
+      <node-form v-if="nodeFormVisible" @repaint="repaint" ref="nodeForm"></node-form>
       <relation-form v-if="relationFormVisible" ref="relationForm"></relation-form>
       <!-- <ul>
         <li v-for="item in relations" @dblclick="editNode">{{item.from}} {{item.to}}</li>
@@ -39,8 +38,7 @@
       leftMenu,
       flowNode,
       nodeForm,
-      relationForm,
-      
+      relationForm
     },
     data () {
       const defaultConfig = {
@@ -86,8 +84,13 @@
            filter: ".state-item-sub"
         },
         // 控制表单显示与隐藏
-        nodeFormVisible: false,
-        relationFormVisible: false
+        nodeFormVisible: true,
+        relationFormVisible: false,
+        //当前编辑的节点
+        currentEditNode: '',
+        //当前编辑的关系
+        currentEditRelation: '',
+        flowId: ''
       }
     },
     mounted () {
@@ -95,6 +98,10 @@
         this.jsPlumb = jsPlumb.getInstance()
         this.jsPlumbInit();
       })
+    },
+    updated () {
+      console.log('update')
+      //this.jsPlumb.repaint();
     },
     methods : {
       //获取数据
@@ -157,15 +164,21 @@
           })
 
           // 单点击了连接线,
-           this.jsPlumb.bind('dblclick', (conn, originalEvent) => {
+          this.jsPlumb.bind('click', (conn, originalEvent) => {
              this.editRelation(conn.sourceId,conn.targetId)
           })
 
 
         })
         this.$nextTick(function () {
-          console.log(this.jsPlumb.Defaults)
           this.loadEasyFlowFinish = true
+          let firstNodeKey
+          //取第一个属性
+          for (var key in this.nodeObjs){
+            firstNodeKey = key
+            break
+          }
+          this.editNode(firstNodeKey)
         })
       },
 
@@ -231,11 +244,19 @@
         let nodeHeight = evt.item.clientHeight
         let nodeWidth = evt.item.clientWidth
         let classes = evt.item.className
+        let title = '';
+        if(classes.includes('start')) {
+          title = '开始'
+        } else if(classes.includes('end')) {
+          title = '结束'
+        } else {
+          title = nodeId
+        }
         let node = {
             id: nodeId,
-            title: nodeId,
-            top:top,
-            left: left,
+            node_name: title,
+            y: top,
+            x: left,
             classes: classes,
             height:nodeHeight,
             width: nodeWidth,
@@ -308,8 +329,8 @@
       dragStop(event){
         let dragNodeId = event.selection[0][0].id;
         let dragNode = this.nodeObjs[dragNodeId]
-        dragNode.top = event.selection[0][1].top;
-        dragNode.left = event.selection[0][1].left;
+        dragNode.y = event.selection[0][1].top;
+        dragNode.x = event.selection[0][1].left;
       },
 
       /**
@@ -350,6 +371,11 @@
           }
         }
 
+      },
+
+      //修改表单数据重绘
+      repaint() {
+        this.jsPlumb.repaintEverything();
       }
     }
   }
@@ -410,5 +436,21 @@
     padding: 12px 20px;
     font-size: 14px;
     border-radius: 4px;
+  }
+
+  .start, .calculate, .end{
+    color: #fff;
+  }
+  .start{
+    background:#e6a23c
+  }
+  .default{
+    background: white;
+  }
+  .calculate{
+    background:#409eff;
+  }
+  .end{
+    background: #f56c6c;
   }
 </style>

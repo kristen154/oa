@@ -1,7 +1,7 @@
 <template>
   <div>
   <div v-for="item in nodeList">
-    <draggable  @end="addNode" @choose="move"><el-button :id="item.id">{{item.title}}</el-button></draggable>
+    <draggable  @end="addNode" @choose="move"><el-button :class="item.type" :id="item.id">{{item.title}}</el-button></draggable>
   </div>
  </div>
 </template>
@@ -21,20 +21,32 @@
     data(){
       return {
         nodeList:
-        {'1':{
-          id:'1',
-          title: '类型一',
-          type: 'user'
-        },
-        '2':{
-          id:'2',
-          title: '类型二',
-          type: 'group'
-          }
+        {
+          '1':{
+            id:'1',
+            title: '开始',
+            type: 'start'
+          },
+          '2':{
+            id:'2',
+            title: '一般',
+            type: 'default'
+          },
+          '3':{
+            id:'3',
+            title: '计算',
+            type: 'calculate'
+          },
+          '4':{
+            id:'4',
+            title: '结束',
+            type: 'end'
+          },
         },
         nodeMenu:null,
       }
     },
+
     created(){
       /**
        * 以下是为了解决在火狐浏览器上推拽时弹出tab页到搜索问题
@@ -76,5 +88,20 @@
   }
 </script>
 
-<style>
+<style scoped="scoped">
+  .start, .calculate, .end{
+    color: #fff;
+  }
+  .start{
+    background:#e6a23c
+  }
+  .default{
+    background: white;
+  }
+  .calculate{
+    background:#409eff;
+  }
+  .end{
+    background: #f56c6c;
+  }
 </style>

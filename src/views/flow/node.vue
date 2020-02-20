@@ -3,7 +3,7 @@
     @mouseenter="mouseEnter=true"
     @mouseleave="mouseEnter=false">
     <div class="close" v-show="mouseEnter" @click="deleteNode"><i class="el-icon-error"></i></div>
-    <div class="move" :style="moveStyle"   @dblclick="editNode">{{node.title}}</div>
+    <div class="move" :style="moveStyle" @click="editNode">{{node.node_name}}</div>
     <div :id="node.id+'-sub'" :ref="node.id+'-sub'" :style="stateItemSubStyle" class="state-item-sub"></div>
   </div>
 </template>
